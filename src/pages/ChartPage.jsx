@@ -1,11 +1,11 @@
-import { saveChart } from '../utils/supabase'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '../utils/store'
-import { computeChart, SIGNS, SIGN_SYMBOLS, SIGN_COLORS, NAKSHATRAS, DASHAS, DASHA_DESC, MOON_PHASES } from '../utils/astrology'
+import { SIGN_SYMBOLS, MOON_PHASES, DASHA_DESC } from '../utils/astrology'
 import ChartWheel from '../components/ChartWheel'
 import AstroChat from '../components/AstroChat'
 import styles from './ChartPage.module.css'
 import { generateChart } from '../utils/api'
+import { saveChart, loadUserChart } from '../utils/supabase'
 
 const PLANET_DESCS = [
   'Your core identity, vitality, and soul purpose',
@@ -49,12 +49,34 @@ const LOAD_TEXTS = [
 ]
 
 export default function ChartPage() {
-  const { chart, userName, setChart, system, setSystem } = useStore()
+  const { chart, userName, setChart, system, setSystem, user } = useStore()
   const [form, setForm] = useState({ name: '', dob: '', tob: '12:00', city: 'Mumbai', lat: 19.076, lon: 72.877, gender: '' })
   const [loading, setLoading] = useState(false)
   const [loadText, setLoadText] = useState('')
   const [activeTab, setActiveTab] = useState('chart')
   const [err, setErr] = useState('')
+
+  // ── Auto-load saved chart when user logs in ──
+  useEffect(() => {
+    if (!user || chart) return
+    const load = async () => {
+      try {
+        const saved = await loadUserChart()
+        if (saved && saved.chart_data) {
+          setChart(saved.chart_data, {
+            dob: saved.dob,
+            tob: saved.tob,
+            city: saved.city,
+            lat: saved.lat,
+            lon: saved.lon,
+          }, saved.name, saved.id)
+        }
+      } catch (e) {
+        console.log('No saved chart found')
+      }
+    }
+    load()
+  }, [user])
 
   const handleCity = (e) => {
     const city = CITIES.find(c => c.name === e.target.value)
@@ -72,35 +94,21 @@ export default function ChartPage() {
       setLoadText(LOAD_TEXTS[i])
     }, 650)
     try {
-      const chart = await generateChart(
-        form.dob,
-        form.tob,
-        form.lat,
-        form.lon,
-        system,
-        form.name
+      const result = await generateChart(
+        form.dob, form.tob, form.lat, form.lon, system, form.name
       )
-      setChart(chart, form, form.name)
-        // Save to Supabase if user is logged in
-try {
-  const { user } = useStore.getState()
-  if (user) {
-    const saved = await saveChart(chart, form, form.name)
-    useStore.getState().setChart(chart, form, form.name, saved?.id)
-  }
-} catch (e) {
-  console.log('Chart save skipped:', e.message)
-}// Save to Supabase if user is logged in
-try {
-  const { user } = useStore.getState()
-  if (user) {
-    const saved = await saveChart(chart, form, form.name)
-    useStore.getState().setChart(chart, form, form.name, saved?.id)
-  }
-} catch (e) {
-  console.log('Chart save skipped:', e.message)
-}
-      
+      // Save to Supabase if user is logged in
+      if (user) {
+        try {
+          const saved = await saveChart(result, form, form.name)
+          setChart(result, form, form.name, saved?.id)
+        } catch (e) {
+          console.log('Chart save skipped:', e.message)
+          setChart(result, form, form.name)
+        }
+      } else {
+        setChart(result, form, form.name)
+      }
       setActiveTab('chart')
     } catch (err) {
       setErr('Chart generation failed. Please try again.')
@@ -110,7 +118,6 @@ try {
       setLoading(false)
     }
   }
-  
 
   const mp = chart ? MOON_PHASES[chart.moonPhaseIndex] : null
 
@@ -118,16 +125,14 @@ try {
     <main style={{ position: 'relative', zIndex: 2, paddingTop: 80 }}>
       <div className="section-wrap">
 
-        {/* HEADER */}
         <div className={styles.header}>
           <div className="label" style={{ marginBottom: 10 }}>✦ Birth Chart</div>
           <h1 style={{ fontSize: 'clamp(26px,4vw,44px)', marginBottom: 12 }}>Your Cosmic Blueprint</h1>
           <p style={{ color: 'var(--muted)', fontSize: 17, fontStyle: 'italic', maxWidth: 520 }}>
-            Real planetary positions calculated using Jean Meeus astronomical algorithms. Lahiri Ayanamsha applied for Vedic charts.
+            Real planetary positions calculated using Swiss Ephemeris. Lahiri Ayanamsha applied for Vedic charts.
           </p>
         </div>
 
-        {/* FORM */}
         <div className={`card ${styles.formCard}`}>
           <div className={styles.systemToggle}>
             <button className={`${styles.sysBtn} ${system === 'vedic' ? styles.sysBtnActive : ''}`} onClick={() => setSystem('vedic')}>
@@ -175,7 +180,6 @@ try {
           </div>
         </div>
 
-        {/* LOADING */}
         {loading && (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div className="spinner" style={{ marginBottom: 24 }} />
@@ -183,17 +187,15 @@ try {
           </div>
         )}
 
-        {/* RESULTS */}
         {chart && !loading && (
           <div className={styles.results}>
-            {/* Identity strip */}
             <div className={styles.identityStrip}>
               <div className={styles.idMain}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px,3vw,28px)', color: 'var(--gold2)', marginBottom: 6 }}>
                   {userName || 'Your'}'s Cosmic Blueprint
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 2, color: 'var(--muted2)' }}>
-                  {system === 'vedic' ? 'Vedic · Lahiri Ayanamsha' : 'Western · Tropical Zodiac'} · {new Date(form.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} · {form.tob} · {form.city}
+                  {system === 'vedic' ? 'Vedic · Lahiri Ayanamsha' : 'Western · Tropical Zodiac'} · {form.dob ? new Date(form.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : ''} · {form.tob} · {form.city}
                 </div>
               </div>
               <div className={styles.idSigns}>
@@ -211,7 +213,6 @@ try {
               </div>
             </div>
 
-            {/* Tabs */}
             <div className="tabs">
               {['chart', 'planets', 'dasha', 'nakshatra', 'chat'].map(t => (
                 <button key={t} className={`tab-btn ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>
@@ -220,7 +221,6 @@ try {
               ))}
             </div>
 
-            {/* CHART TAB */}
             {activeTab === 'chart' && (
               <div className={styles.chartTab}>
                 <div className={styles.chartLeft}>
@@ -280,7 +280,6 @@ try {
               </div>
             )}
 
-            {/* PLANETS TAB */}
             {activeTab === 'planets' && (
               <div className={styles.planetsGrid}>
                 {chart.planets.map((p, i) => (
@@ -300,15 +299,11 @@ try {
                       {p.nakshatra.name} · Pada {p.pada}
                     </div>
                     <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>{PLANET_DESCS[i]}</p>
-                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)', fontSize: 12, color: 'var(--muted2)', fontStyle: 'italic' }}>
-                      {p.name} in {p.sign}: {p.sign === 'Aries' || p.sign === 'Leo' || p.sign === 'Sagittarius' ? 'Energised and expressive' : p.sign === 'Taurus' || p.sign === 'Virgo' || p.sign === 'Capricorn' ? 'Grounded and productive' : p.sign === 'Gemini' || p.sign === 'Libra' || p.sign === 'Aquarius' ? 'Intellectual and communicative' : 'Intuitive and emotionally deep'}.
-                    </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* DASHA TAB */}
             {activeTab === 'dasha' && (
               <div>
                 <div className={styles.dashaMain}>
@@ -340,7 +335,6 @@ try {
               </div>
             )}
 
-            {/* NAKSHATRA TAB */}
             {activeTab === 'nakshatra' && (
               <div>
                 <div className={styles.nkCard}>
@@ -348,17 +342,6 @@ try {
                   <div style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(22px,4vw,32px)', fontWeight: 700, color: 'var(--teal)', marginBottom: 6 }}>{chart.moonNakshatra.name}</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 3, color: 'var(--muted2)', marginBottom: 16 }}>Ruled by {chart.moonNakshatra.ruler} · Pada {chart.planets[1].pada} · Moon in {chart.moonSign}</div>
                   <p style={{ fontSize: 17, lineHeight: 1.85, color: 'var(--muted)', fontStyle: 'italic', maxWidth: 640 }}>{chart.moonNakshatra.desc}</p>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 20 }}>
-                    {['Ruling Planet', 'Element', 'Quality', 'Deity'].map((t, i) => {
-                      const vals = [chart.moonNakshatra.ruler, 'Lunar', 'Fixed', 'Cosmic Intelligence']
-                      return (
-                        <div key={t} style={{ background: 'rgba(45,212,192,.06)', border: '1px solid rgba(45,212,192,.2)', borderRadius: 10, padding: '10px 16px', textAlign: 'center' }}>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: 2, color: 'var(--muted2)', marginBottom: 4 }}>{t}</div>
-                          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 13, color: 'var(--teal)' }}>{vals[i]}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
                 </div>
                 <div style={{ marginTop: 28 }}>
                   <div className="label" style={{ marginBottom: 16 }}>All Planetary Nakshatras</div>
@@ -378,7 +361,6 @@ try {
               </div>
             )}
 
-            {/* CHAT TAB */}
             {activeTab === 'chat' && (
               <div>
                 <div style={{ marginBottom: 20 }}>

@@ -1,3 +1,4 @@
+import FloatingChat from './components/FloatingChat'
 import { Routes, Route } from 'react-router-dom'
 import { useEffect, useRef } from 'react'
 import { Toaster } from 'react-hot-toast'
@@ -57,6 +58,7 @@ export default function App() {
           fontSize: '16px'
         }
       }} />
+      <FloatingChat />
     </>
   )
 }

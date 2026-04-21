@@ -268,3 +268,8 @@ select.form-input option { background: #0d0b1f; }
 @media(max-width:600px) {
   .section-wrap, .section-wrap-sm { padding: 48px 16px; }
 }
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
