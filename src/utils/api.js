@@ -1,6 +1,22 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
+// ── Simple in-memory cache ──
+const cache = new Map()
+function getCached(key) {
+  const item = cache.get(key)
+  if (!item) return null
+  if (Date.now() > item.expiry) { cache.delete(key); return null }
+  return item.data
+}
+function setCache(key, data, ttlMs) {
+  cache.set(key, { data, expiry: Date.now() + ttlMs })
+}
+
 export async function generateChart(date, time, lat, lon, system, name) {
+  const cacheKey = `chart-${date}-${time}-${lat}-${lon}-${system}`
+  const cached = getCached(cacheKey)
+  if (cached) return cached
+
   const res = await fetch(`${API_URL}/api/chart`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -8,6 +24,8 @@ export async function generateChart(date, time, lat, lon, system, name) {
   })
   const data = await res.json()
   if (!data.success) throw new Error(data.error)
+  // Cache chart for 1 hour — planetary positions don't change
+  setCache(cacheKey, data.chart, 60 * 60 * 1000)
   return data.chart
 }
 
@@ -23,6 +41,11 @@ export async function sendChatMessage(message, chart, userName, history, pageCon
 }
 
 export async function getDailyReading(chart, userName) {
+  // Cache daily reading for 6 hours per sun+moon+lagna combo
+  const cacheKey = `daily-${chart.sunSign}-${chart.moonSign}-${chart.lagnaName}-${new Date().toDateString()}`
+  const cached = getCached(cacheKey)
+  if (cached) return cached
+
   const res = await fetch(`${API_URL}/api/daily`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -30,6 +53,7 @@ export async function getDailyReading(chart, userName) {
   })
   const data = await res.json()
   if (!data.success) throw new Error(data.error)
+  setCache(cacheKey, data.reading, 6 * 60 * 60 * 1000)
   return data.reading
 }
 
@@ -56,13 +80,22 @@ export async function getTarotReading(cards, chart, userName) {
 }
 
 export async function getMoonPhase() {
+  const cacheKey = `moon-${new Date().toDateString()}`
+  const cached = getCached(cacheKey)
+  if (cached) return cached
+
   const res = await fetch(`${API_URL}/api/moon`)
   const data = await res.json()
   if (!data.success) throw new Error(data.error)
+  setCache(cacheKey, data, 60 * 60 * 1000)
   return data
 }
 
 export async function getNumerology(name, dob) {
+  const cacheKey = `num-${name}-${dob}`
+  const cached = getCached(cacheKey)
+  if (cached) return cached
+
   const res = await fetch(`${API_URL}/api/numerology`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -70,5 +103,6 @@ export async function getNumerology(name, dob) {
   })
   const data = await res.json()
   if (!data.success) throw new Error(data.error)
+  setCache(cacheKey, data, 24 * 60 * 60 * 1000)
   return data
 }

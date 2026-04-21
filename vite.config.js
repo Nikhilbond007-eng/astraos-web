@@ -3,5 +3,17 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 3000 }
+  server: { port: 3000 },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase': ['@supabase/supabase-js'],
+          'utils': ['zustand', 'date-fns'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600,
+  }
 })

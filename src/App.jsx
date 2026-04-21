@@ -1,16 +1,42 @@
-import FloatingChat from './components/FloatingChat'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { useEffect, useRef } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { useStore } from './utils/store'
 import Navbar from './components/Navbar'
 import StarCanvas from './components/StarCanvas'
-import HomePage from './pages/HomePage'
-import ChartPage from './pages/ChartPage'
-import { DailyPage } from './pages/DailyPage'
-import { TarotPage, CompatPage, MoonPage } from './pages/CompatMoonTarot'
-import { NumerologyPage, PricingPage } from './pages/NumerologyPricing'
 import PaywallModal from './components/PaywallModal'
+import FloatingChat from './components/FloatingChat'
+
+// ── Lazy load all pages ──
+const HomePage = lazy(() => import('./pages/HomePage'))
+const ChartPage = lazy(() => import('./pages/ChartPage'))
+const DailyPage = lazy(() => import('./pages/DailyPage').then(m => ({ default: m.DailyPage })))
+const TarotPage = lazy(() => import('./pages/CompatMoonTarot').then(m => ({ default: m.TarotPage })))
+const CompatPage = lazy(() => import('./pages/CompatMoonTarot').then(m => ({ default: m.CompatPage })))
+const MoonPage = lazy(() => import('./pages/CompatMoonTarot').then(m => ({ default: m.MoonPage })))
+const NumerologyPage = lazy(() => import('./pages/NumerologyPricing').then(m => ({ default: m.NumerologyPage })))
+const PricingPage = lazy(() => import('./pages/NumerologyPricing').then(m => ({ default: m.PricingPage })))
+
+// ── Page loading fallback ──
+function PageLoader() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--void)'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div className="spinner" style={{ marginBottom: 16 }} />
+        <p style={{
+          fontFamily: 'var(--font-serif)', fontSize: 16,
+          color: 'var(--muted)', animation: 'pulse 1.5s infinite'
+        }}>
+          Loading...
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export default function App() {
   const dotRef = useRef(null)
@@ -38,17 +64,20 @@ export default function App() {
       <div className="cursor-ring" ref={ringRef} />
       <StarCanvas />
       <Navbar />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/chart" element={<ChartPage />} />
-        <Route path="/daily" element={<DailyPage />} />
-        <Route path="/tarot" element={<TarotPage />} />
-        <Route path="/compatibility" element={<CompatPage />} />
-        <Route path="/moon" element={<MoonPage />} />
-        <Route path="/numerology" element={<NumerologyPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/chart" element={<ChartPage />} />
+          <Route path="/daily" element={<DailyPage />} />
+          <Route path="/tarot" element={<TarotPage />} />
+          <Route path="/compatibility" element={<CompatPage />} />
+          <Route path="/moon" element={<MoonPage />} />
+          <Route path="/numerology" element={<NumerologyPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+        </Routes>
+      </Suspense>
       <PaywallModal />
+      <FloatingChat />
       <Toaster position="bottom-center" toastOptions={{
         style: {
           background: '#0f0e1c',
@@ -58,7 +87,6 @@ export default function App() {
           fontSize: '16px'
         }
       }} />
-      <FloatingChat />
     </>
   )
 }

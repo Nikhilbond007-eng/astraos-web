@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, memo } from 'react'
 import { SIGN_SYMBOLS, SIGN_COLORS } from '../utils/astrology'
 
-export default function ChartWheel({ chart, size = 420 }) {
+export default memo(function ChartWheel({ chart, size = 420 }) {
   const ref = useRef(null)
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export default function ChartWheel({ chart, size = 420 }) {
     ;[0.95, 0.75, 0.52, 0.28].forEach((r, i) => {
       ctx.beginPath(); ctx.arc(cx, cy, cx * r, 0, Math.PI * 2)
       ctx.strokeStyle = `rgba(212,168,83,${0.07 + i * 0.04})`; ctx.lineWidth = 1; ctx.stroke()
-    })
+})
 
     // House division lines
     for (let i = 0; i < 12; i++) {
@@ -90,10 +90,11 @@ export default function ChartWheel({ chart, size = 420 }) {
     ctx.moveTo(cx + Math.cos(ascAngle) * cx * 0.28, cy + Math.sin(ascAngle) * cx * 0.28)
     ctx.lineTo(cx + Math.cos(ascAngle) * cx * 0.52, cy + Math.sin(ascAngle) * cx * 0.52)
     ctx.strokeStyle = 'rgba(212,168,83,0.5)'; ctx.lineWidth = 1.5; ctx.stroke()
-
   }, [chart, size])
 
   return (
     <canvas ref={ref} width={size} height={size} style={{ width: '100%', maxWidth: size, height: 'auto', display: 'block' }} />
   )
-}
+})
+
+
