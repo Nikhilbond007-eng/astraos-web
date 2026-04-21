@@ -1,4 +1,3 @@
-import { downloadChartPDF } from '../utils/generatePDF'
 import { useState, useEffect } from 'react'
 import { useStore } from '../utils/store'
 import { SIGN_SYMBOLS, MOON_PHASES, DASHA_DESC } from '../utils/astrology'
@@ -7,6 +6,7 @@ import AstroChat from '../components/AstroChat'
 import styles from './ChartPage.module.css'
 import { generateChart } from '../utils/api'
 import { saveChart, loadUserChart } from '../utils/supabase'
+import { downloadChartPDF } from '../utils/generatePDF'
 
 const PLANET_DESCS = [
   'Your core identity, vitality, and soul purpose',
@@ -51,7 +51,10 @@ const LOAD_TEXTS = [
 
 export default function ChartPage() {
   const { chart, userName, setChart, system, setSystem, user } = useStore()
-  const [form, setForm] = useState({ name: '', dob: '', tob: '12:00', city: 'Mumbai', lat: 19.076, lon: 72.877, gender: '' })
+  const [form, setForm] = useState({
+    name: '', dob: '', tob: '12:00',
+    city: 'Mumbai', lat: 19.076, lon: 72.877, gender: ''
+  })
   const [loading, setLoading] = useState(false)
   const [loadText, setLoadText] = useState('')
   const [activeTab, setActiveTab] = useState('chart')
@@ -98,7 +101,6 @@ export default function ChartPage() {
       const result = await generateChart(
         form.dob, form.tob, form.lat, form.lon, system, form.name
       )
-      // Save to Supabase if user is logged in
       if (user) {
         try {
           const saved = await saveChart(result, form, form.name)
@@ -136,10 +138,16 @@ export default function ChartPage() {
 
         <div className={`card ${styles.formCard}`}>
           <div className={styles.systemToggle}>
-            <button className={`${styles.sysBtn} ${system === 'vedic' ? styles.sysBtnActive : ''}`} onClick={() => setSystem('vedic')}>
+            <button
+              className={`${styles.sysBtn} ${system === 'vedic' ? styles.sysBtnActive : ''}`}
+              onClick={() => setSystem('vedic')}
+            >
               🕉 Vedic (Sidereal)
             </button>
-            <button className={`${styles.sysBtn} ${system === 'western' ? styles.sysBtnActive : ''}`} onClick={() => setSystem('western')}>
+            <button
+              className={`${styles.sysBtn} ${system === 'western' ? styles.sysBtnActive : ''}`}
+              onClick={() => setSystem('western')}
+            >
               ☀ Western (Tropical)
             </button>
           </div>
@@ -154,7 +162,9 @@ export default function ChartPage() {
               <input className="form-input" type="date" value={form.dob} onChange={e => setForm(f => ({ ...f, dob: e.target.value }))} />
             </div>
             <div className="form-group">
-              <label className="form-label">Time of Birth <span style={{ color: 'var(--teal)', fontSize: 11 }}>(exact time = accurate results)</span></label>
+              <label className="form-label">
+                Time of Birth <span style={{ color: 'var(--teal)', fontSize: 11 }}>(exact time = accurate results)</span>
+              </label>
               <input className="form-input" type="time" value={form.tob} onChange={e => setForm(f => ({ ...f, tob: e.target.value }))} />
             </div>
             <div className="form-group">
@@ -174,7 +184,12 @@ export default function ChartPage() {
             </div>
             <div className="form-group" style={{ justifyContent: 'flex-end' }}>
               {err && <p style={{ color: 'var(--rose)', fontSize: 13, marginBottom: 8 }}>{err}</p>}
-              <button className="btn-primary" style={{ width: '100%', textAlign: 'center' }} onClick={generate} disabled={loading}>
+              <button
+                className="btn-primary"
+                style={{ width: '100%', textAlign: 'center' }}
+                onClick={generate}
+                disabled={loading}
+              >
                 {loading ? loadText : '✦  Generate My Chart'}
               </button>
             </div>
@@ -184,71 +199,80 @@ export default function ChartPage() {
         {loading && (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div className="spinner" style={{ marginBottom: 24 }} />
-            <p style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--muted)', animation: 'pulse 1.5s ease-in-out infinite' }}>{loadText}</p>
+            <p style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--muted)', animation: 'pulse 1.5s ease-in-out infinite' }}>
+              {loadText}
+            </p>
           </div>
         )}
 
-{chart && !loading && (
-  <div className={styles.results}>
-    <div className={styles.identityStrip}>
-      <div className={styles.idMain}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px,3vw,28px)', color: 'var(--gold2)', marginBottom: 6 }}>
-          {userName || 'Your'}'s Cosmic Blueprint
-        </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 2, color: 'var(--muted2)' }}>
-          {system === 'vedic' ? 'Vedic · Lahiri Ayanamsha' : 'Western · Tropical Zodiac'} · {form.dob ? new Date(form.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : ''} · {form.tob} · {form.city}
-        </div>
-      </div>
-      <div className={styles.idSigns}>
-        {[
-          { label: 'Sun Sign', val: `${SIGN_SYMBOLS[chart.planets[0].signIdx]} ${chart.sunSign}` },
-          { label: 'Moon Sign', val: `${SIGN_SYMBOLS[chart.planets[1].signIdx]} ${chart.moonSign}` },
-          { label: 'Ascendant', val: `${chart.lagnaSymbol} ${chart.lagnaName}` },
-          { label: 'Nakshatra', val: `${chart.moonNakshatra.symbol} ${chart.moonNakshatra.name}` },
-        ].map(s => (
-          <div key={s.label} className={styles.idSign}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--muted2)', marginBottom: 4 }}>{s.label}</div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--gold)' }}>{s.val}</div>
-          </div>
-        ))}
-      </div>
+        {chart && !loading && (
+          <div className={styles.results}>
 
-      {/* ── ADD BUTTON HERE ── */}
-      <button
-        onClick={() => downloadChartPDF(chart, userName, form)}
-        style={{
-          padding: '10px 20px',
-          borderRadius: 100,
-          border: '1px solid rgba(212,168,83,.3)',
-          background: 'rgba(212,168,83,.08)',
-          color: 'var(--gold)',
-          fontFamily: 'var(--font-serif)',
-          fontSize: 13,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          transition: 'all .2s',
-          whiteSpace: 'nowrap',
-          alignSelf: 'center'
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,168,83,.16)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,168,83,.08)'}
-      >
-        ↓ Download PDF
-      </button>
+            {/* ── Identity Strip ── */}
+            <div className={styles.identityStrip}>
+              <div className={styles.idMain}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px,3vw,28px)', color: 'var(--gold2)', marginBottom: 6 }}>
+                  {userName || 'Your'}'s Cosmic Blueprint
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 2, color: 'var(--muted2)' }}>
+                  {system === 'vedic' ? 'Vedic · Lahiri Ayanamsha' : 'Western · Tropical Zodiac'} · {form.dob ? new Date(form.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : ''} · {form.tob} · {form.city}
+                </div>
+              </div>
 
-    </div>
-    
+              <div className={styles.idSigns}>
+                {[
+                  { label: 'Sun Sign', val: `${SIGN_SYMBOLS[chart.planets[0].signIdx]} ${chart.sunSign}` },
+                  { label: 'Moon Sign', val: `${SIGN_SYMBOLS[chart.planets[1].signIdx]} ${chart.moonSign}` },
+                  { label: 'Ascendant', val: `${chart.lagnaSymbol} ${chart.lagnaName}` },
+                  { label: 'Nakshatra', val: `${chart.moonNakshatra.symbol} ${chart.moonNakshatra.name}` },
+                ].map(s => (
+                  <div key={s.label} className={styles.idSign}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--muted2)', marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--gold)' }}>{s.val}</div>
+                  </div>
+                ))}
+              </div>
 
+              {/* ── Download PDF Button ── */}
+              <button
+                onClick={() => downloadChartPDF(chart, userName, form)}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: 100,
+                  border: '1px solid rgba(212,168,83,.3)',
+                  background: 'rgba(212,168,83,.08)',
+                  color: 'var(--gold)',
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  transition: 'all .2s',
+                  whiteSpace: 'nowrap',
+                  alignSelf: 'center'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,168,83,.16)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,168,83,.08)'}
+              >
+                ↓ Download PDF
+              </button>
+            </div>
+
+            {/* ── Tabs ── */}
             <div className="tabs">
               {['chart', 'planets', 'dasha', 'nakshatra', 'chat'].map(t => (
-                <button key={t} className={`tab-btn ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>
+                <button
+                  key={t}
+                  className={`tab-btn ${activeTab === t ? 'active' : ''}`}
+                  onClick={() => setActiveTab(t)}
+                >
                   {t === 'chart' ? '🔮 Birth Chart' : t === 'planets' ? '🪐 Planets' : t === 'dasha' ? '📅 Dasha' : t === 'nakshatra' ? '⭐ Nakshatra' : '🤖 Astro Chat'}
                 </button>
               ))}
             </div>
 
+            {/* ── Chart Tab ── */}
             {activeTab === 'chart' && (
               <div className={styles.chartTab}>
                 <div className={styles.chartLeft}>
@@ -308,6 +332,7 @@ export default function ChartPage() {
               </div>
             )}
 
+            {/* ── Planets Tab ── */}
             {activeTab === 'planets' && (
               <div className={styles.planetsGrid}>
                 {chart.planets.map((p, i) => (
@@ -332,13 +357,20 @@ export default function ChartPage() {
               </div>
             )}
 
+            {/* ── Dasha Tab ── */}
             {activeTab === 'dasha' && (
               <div>
                 <div className={styles.dashaMain}>
                   <div className="label" style={{ marginBottom: 8 }}>Current Mahadasha</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,4vw,36px)', color: 'var(--gold2)', marginBottom: 6 }}>{chart.currentDasha.planet} Dasha</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--muted)', marginBottom: 16 }}>{Math.floor(chart.currentDasha.startYear)} — {Math.floor(chart.currentDasha.endYear)} · {chart.currentDasha.years} year period</div>
-                  <p style={{ fontSize: 17, color: 'var(--muted)', lineHeight: 1.85, fontStyle: 'italic', maxWidth: 680 }}>{DASHA_DESC[chart.currentDasha.planet]}</p>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,4vw,36px)', color: 'var(--gold2)', marginBottom: 6 }}>
+                    {chart.currentDasha.planet} Dasha
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--muted)', marginBottom: 16 }}>
+                    {Math.floor(chart.currentDasha.startYear)} — {Math.floor(chart.currentDasha.endYear)} · {chart.currentDasha.years} year period
+                  </div>
+                  <p style={{ fontSize: 17, color: 'var(--muted)', lineHeight: 1.85, fontStyle: 'italic', maxWidth: 680 }}>
+                    {DASHA_DESC[chart.currentDasha.planet]}
+                  </p>
                 </div>
                 <div style={{ marginTop: 24 }}>
                   <div className="label" style={{ marginBottom: 16 }}>Complete Dasha Timeline</div>
@@ -351,7 +383,9 @@ export default function ChartPage() {
                       <div key={i} className={`${styles.dashaItem} ${isActive ? styles.dashaActive : ''}`}>
                         <div className={`${styles.dashaDot} ${isActive ? styles.dashaDotActive : ''}`} />
                         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 15, width: 90, color: isActive ? 'var(--gold)' : 'var(--text)' }}>{d.planet}</div>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--muted)', flex: 1 }}>{Math.floor(d.startYear)} — {Math.floor(d.endYear)} · {d.years}yr</div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--muted)', flex: 1 }}>
+                          {Math.floor(d.startYear)} — {Math.floor(d.endYear)} · {d.years}yr
+                        </div>
                         <div style={{ width: 80, height: 4, borderRadius: 99, background: 'rgba(255,255,255,.06)', overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${pct}%`, background: isActive ? 'var(--gold)' : 'rgba(212,168,83,.3)', borderRadius: 99 }} />
                         </div>
@@ -363,13 +397,20 @@ export default function ChartPage() {
               </div>
             )}
 
+            {/* ── Nakshatra Tab ── */}
             {activeTab === 'nakshatra' && (
               <div>
                 <div className={styles.nkCard}>
                   <div style={{ fontSize: 52, marginBottom: 14 }}>{chart.moonNakshatra.symbol}</div>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(22px,4vw,32px)', fontWeight: 700, color: 'var(--teal)', marginBottom: 6 }}>{chart.moonNakshatra.name}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 3, color: 'var(--muted2)', marginBottom: 16 }}>Ruled by {chart.moonNakshatra.ruler} · Pada {chart.planets[1].pada} · Moon in {chart.moonSign}</div>
-                  <p style={{ fontSize: 17, lineHeight: 1.85, color: 'var(--muted)', fontStyle: 'italic', maxWidth: 640 }}>{chart.moonNakshatra.desc}</p>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(22px,4vw,32px)', fontWeight: 700, color: 'var(--teal)', marginBottom: 6 }}>
+                    {chart.moonNakshatra.name}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 3, color: 'var(--muted2)', marginBottom: 16 }}>
+                    Ruled by {chart.moonNakshatra.ruler} · Pada {chart.planets[1].pada} · Moon in {chart.moonSign}
+                  </div>
+                  <p style={{ fontSize: 17, lineHeight: 1.85, color: 'var(--muted)', fontStyle: 'italic', maxWidth: 640 }}>
+                    {chart.moonNakshatra.desc}
+                  </p>
                 </div>
                 <div style={{ marginTop: 28 }}>
                   <div className="label" style={{ marginBottom: 16 }}>All Planetary Nakshatras</div>
@@ -389,15 +430,21 @@ export default function ChartPage() {
               </div>
             )}
 
+            {/* ── Chat Tab ── */}
             {activeTab === 'chat' && (
               <div>
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 600, marginBottom: 8 }}>Chart-Aware AI Astrologer</div>
-                  <p style={{ fontSize: 15, color: 'var(--muted)' }}>Every response is personalised using your actual planetary positions. First 3 messages free — then upgrade for unlimited access.</p>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 600, marginBottom: 8 }}>
+                    Chart-Aware AI Astrologer
+                  </div>
+                  <p style={{ fontSize: 15, color: 'var(--muted)' }}>
+                    Every response is personalised using your actual planetary positions. First 3 messages free — then upgrade for unlimited access.
+                  </p>
                 </div>
                 <AstroChat chart={chart} userName={userName} />
               </div>
             )}
+
           </div>
         )}
       </div>
