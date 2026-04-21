@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { TAROT_CARDS, SIGNS, SIGN_SYMBOLS, SIGN_ELEMENTS, MOON_PHASES, computeCompatibility } from '../utils/astrology'
 import { useStore } from '../utils/store'
+import { getCompatibility } from '../utils/api'
 import styles from './Pages.module.css'
 
 // ─── TAROT PAGE ───
@@ -18,7 +19,9 @@ export function TarotPage() {
   }
 
   const reveal = (i) => {
-    const next = [...revealed]; next[i] = true; setRevealed(next)
+    const next = [...revealed]
+    next[i] = true
+    setRevealed(next)
   }
 
   const allRevealed = revealed.every(Boolean) && cards.length === 3
@@ -45,13 +48,11 @@ export function TarotPage() {
               {cards.map((card, i) => (
                 <div key={i} className={styles.tarotCard} onClick={() => reveal(i)}>
                   <div className={`${styles.tarotInner} ${revealed[i] ? styles.tarotRevealed : ''}`}>
-                    {/* Back */}
                     <div className={styles.tarotBack}>
                       <div className={styles.tarotBackPattern} />
                       <div style={{ fontSize: 36, opacity: .3 }}>✦</div>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,.2)', marginTop: 8 }}>TAP TO REVEAL</div>
                     </div>
-                    {/* Face */}
                     <div className={styles.tarotFace}>
                       <div style={{ fontSize: 42, marginBottom: 10 }}>{card.emoji}</div>
                       <div style={{ fontFamily: 'var(--font-serif)', fontSize: 13, color: 'var(--gold2)', textAlign: 'center', marginBottom: 6 }}>{card.name}</div>
@@ -98,21 +99,39 @@ export function CompatPage() {
   const { chart } = useStore()
   const [s1, setS1] = useState(chart ? chart.planets[0].signIdx : 0)
   const [s2, setS2] = useState(1)
-  const [name1, setName1] = useState(chart ? (chart.planets[0].sign) : '')
   const [name2, setName2] = useState('')
   const [type, setType] = useState('love')
   const [result, setResult] = useState(null)
+  const [aiReading, setAiReading] = useState('')
+  const [loadingAI, setLoadingAI] = useState(false)
 
-  const check = () => {
+  const checkCompat = async () => {
     const scores = computeCompatibility(s1, s2)
     setResult(scores)
+    if (chart) {
+      setLoadingAI(true)
+      try {
+        const data = await getCompatibility(
+          chart,
+          { signIdx: s2, planets: [{ sign: SIGNS[s2] }, { sign: SIGNS[s2] }], lagnaName: SIGNS[s2], currentDasha: chart.currentDasha },
+          chart.sunSign,
+          name2 || SIGNS[s2],
+          type
+        )
+        if (data.aiReading) setAiReading(data.aiReading)
+      } catch (e) {
+        console.log('AI reading unavailable')
+      } finally {
+        setLoadingAI(false)
+      }
+    }
   }
 
   const typeVerdicts = (scores) => ({
-    love: `${SIGNS[s1]} and ${SIGNS[s2]} create a ${scores.overall > 75 ? 'deeply magnetic and harmonious' : 'complex but growth-filled'} romantic pairing. Your ${SIGN_ELEMENTS[s1]} and ${SIGN_ELEMENTS[s2]} elemental natures ${scores.overall > 75 ? 'complement each other beautifully — you bring out the best in one another' : 'challenge each other to grow in profound ways'}. ${scores.overall > 80 ? 'This connection has real, lasting potential — nurture it with intention.' : 'The friction between you, approached with consciousness, becomes your greatest teacher.'}`,
-    friend: `As friends, ${SIGNS[s1]} and ${SIGNS[s2]} offer ${scores.overall > 75 ? 'enriching, loyal, and deeply enjoyable companionship' : 'a fascinating dynamic that ultimately deepens both of you'}. Your different elemental natures create a friendship that ${scores.overall > 75 ? 'is naturally balanced and mutually uplifting' : 'always surprises — you learn things from each other that no one else could teach'}.`,
-    business: `${SIGNS[s1]} and ${SIGNS[s2]} as business partners bring ${scores.overall > 70 ? 'complementary strengths that create a powerful, well-rounded team' : 'interesting contrasts that produce innovative outcomes when managed consciously'}. Your combined energies ${scores.overall > 70 ? 'balance the practical and the visionary beautifully' : 'push each other outside comfort zones — where real business growth happens'}.`,
-    family: `Family bonds between ${SIGNS[s1]} and ${SIGNS[s2]} carry ${scores.overall > 70 ? 'deep, intuitive understanding and warmth that transcends words' : 'both beautiful depth and occasional friction — the hallmark of relationships that truly matter'}. This family connection ${scores.overall > 70 ? 'creates a naturally supportive dynamic' : 'teaches you both the most important lessons of your lives'}.`,
+    love: `${SIGNS[s1]} and ${SIGNS[s2]} create a ${scores.overall > 75 ? 'deeply magnetic and harmonious' : 'complex but growth-filled'} romantic pairing. Your ${SIGN_ELEMENTS[s1]} and ${SIGN_ELEMENTS[s2]} elemental natures ${scores.overall > 75 ? 'complement each other beautifully' : 'challenge each other to grow in profound ways'}. ${scores.overall > 80 ? 'This connection has real, lasting potential.' : 'The friction between you becomes your greatest teacher.'}`,
+    friend: `As friends, ${SIGNS[s1]} and ${SIGNS[s2]} offer ${scores.overall > 75 ? 'enriching, loyal companionship' : 'a fascinating dynamic that deepens both of you'}. Your elemental natures create a friendship that ${scores.overall > 75 ? 'is naturally balanced and uplifting' : 'always surprises and teaches'}.`,
+    business: `${SIGNS[s1]} and ${SIGNS[s2]} as business partners bring ${scores.overall > 70 ? 'complementary strengths that create a powerful team' : 'interesting contrasts that produce innovative outcomes'}. Your energies ${scores.overall > 70 ? 'balance practical and visionary beautifully' : 'push each other outside comfort zones'}.`,
+    family: `Family bonds between ${SIGNS[s1]} and ${SIGNS[s2]} carry ${scores.overall > 70 ? 'deep intuitive understanding and warmth' : 'both depth and occasional friction — the hallmark of bonds that truly matter'}. This connection ${scores.overall > 70 ? 'creates a naturally supportive dynamic' : 'teaches the most important life lessons'}.`,
   })
 
   const scoreColor = (s) => s > 80 ? 'var(--green)' : s > 60 ? 'var(--gold)' : 'var(--rose)'
@@ -169,7 +188,7 @@ export function CompatPage() {
               </select>
             </div>
           </div>
-          <button className="btn-primary" style={{ width: '100%', textAlign: 'center' }} onClick={check}>
+          <button className="btn-primary" style={{ width: '100%', textAlign: 'center' }} onClick={checkCompat}>
             ✦ Reveal Compatibility
           </button>
         </div>
@@ -205,8 +224,11 @@ export function CompatPage() {
               ))}
             </div>
 
-            <div className="card" style={{ background: 'linear-gradient(135deg,rgba(45,212,192,.05),rgba(124,92,252,.05))', borderColor: 'rgba(45,212,192,.15)' }}>
-              <p style={{ fontSize: 16, lineHeight: 1.85, color: 'var(--muted)', fontStyle: 'italic' }}>{typeVerdicts(result)[type]}</p>
+            <div className="card" style={{ background: 'linear-gradient(135deg,rgba(45,212,192,.05),rgba(124,92,252,.05))', borderColor: 'rgba(45,212,192,.15)', marginBottom: 20 }}>
+              <p style={{ fontSize: 16, lineHeight: 1.85, color: 'var(--muted)', fontStyle: 'italic' }}>
+                {aiReading || typeVerdicts(result)[type]}
+              </p>
+              {loadingAI && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--gold)', marginTop: 12, animation: 'pulse 1.5s infinite' }}>✦ AI is reading the stars...</p>}
             </div>
           </div>
         )}
@@ -227,7 +249,9 @@ export function MoonPage() {
       <div className="section-wrap">
         <div className="label" style={{ marginBottom: 10 }}>✦ Moon Phase</div>
         <h1 style={{ fontSize: 'clamp(24px,4vw,42px)', marginBottom: 12 }}>The Lunar Calendar</h1>
-        <p style={{ color: 'var(--muted)', fontSize: 17, fontStyle: 'italic', marginBottom: 48 }}>Track the moon's energy and align your actions with the cosmic tides.</p>
+        <p style={{ color: 'var(--muted)', fontSize: 17, fontStyle: 'italic', marginBottom: 48 }}>
+          Track the moon's energy and align your actions with the cosmic tides.
+        </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
           <div className="card" style={{ textAlign: 'center', padding: 40, background: 'linear-gradient(135deg,rgba(124,92,252,.07),rgba(45,212,192,.04))', borderColor: 'rgba(124,92,252,.2)' }}>
@@ -248,13 +272,16 @@ export function MoonPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {MOON_PHASES.map((p, i) => {
                   const daysAhead = ((i - moonPhaseIndex + 8) % 8) * 3 - 1
-                  const d = new Date(today); d.setDate(d.getDate() + daysAhead)
+                  const d = new Date(today)
+                  d.setDate(d.getDate() + daysAhead)
                   const isNow = i === moonPhaseIndex
                   return (
                     <div key={i} style={{ padding: '12px 14px', borderRadius: 12, border: `1px solid ${isNow ? 'rgba(212,168,83,.3)' : 'var(--border)'}`, background: isNow ? 'rgba(212,168,83,.06)' : 'transparent', textAlign: 'center' }}>
                       <div style={{ fontSize: 20, marginBottom: 4 }}>{p.emoji}</div>
                       <div style={{ fontFamily: 'var(--font-serif)', fontSize: 11 }}>{p.name}</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--muted2)', marginTop: 2 }}>{isNow ? 'TODAY' : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--muted2)', marginTop: 2 }}>
+                        {isNow ? 'TODAY' : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </div>
                     </div>
                   )
                 })}
