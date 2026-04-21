@@ -1,3 +1,4 @@
+import { downloadChartPDF } from '../utils/generatePDF'
 import { useState, useEffect } from 'react'
 import { useStore } from '../utils/store'
 import { SIGN_SYMBOLS, MOON_PHASES, DASHA_DESC } from '../utils/astrology'
@@ -187,31 +188,58 @@ export default function ChartPage() {
           </div>
         )}
 
-        {chart && !loading && (
-          <div className={styles.results}>
-            <div className={styles.identityStrip}>
-              <div className={styles.idMain}>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px,3vw,28px)', color: 'var(--gold2)', marginBottom: 6 }}>
-                  {userName || 'Your'}'s Cosmic Blueprint
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 2, color: 'var(--muted2)' }}>
-                  {system === 'vedic' ? 'Vedic · Lahiri Ayanamsha' : 'Western · Tropical Zodiac'} · {form.dob ? new Date(form.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : ''} · {form.tob} · {form.city}
-                </div>
-              </div>
-              <div className={styles.idSigns}>
-                {[
-                  { label: 'Sun Sign', val: `${SIGN_SYMBOLS[chart.planets[0].signIdx]} ${chart.sunSign}` },
-                  { label: 'Moon Sign', val: `${SIGN_SYMBOLS[chart.planets[1].signIdx]} ${chart.moonSign}` },
-                  { label: 'Ascendant', val: `${chart.lagnaSymbol} ${chart.lagnaName}` },
-                  { label: 'Nakshatra', val: `${chart.moonNakshatra.symbol} ${chart.moonNakshatra.name}` },
-                ].map(s => (
-                  <div key={s.label} className={styles.idSign}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--muted2)', marginBottom: 4 }}>{s.label}</div>
-                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--gold)' }}>{s.val}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+{chart && !loading && (
+  <div className={styles.results}>
+    <div className={styles.identityStrip}>
+      <div className={styles.idMain}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px,3vw,28px)', color: 'var(--gold2)', marginBottom: 6 }}>
+          {userName || 'Your'}'s Cosmic Blueprint
+        </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 2, color: 'var(--muted2)' }}>
+          {system === 'vedic' ? 'Vedic · Lahiri Ayanamsha' : 'Western · Tropical Zodiac'} · {form.dob ? new Date(form.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : ''} · {form.tob} · {form.city}
+        </div>
+      </div>
+      <div className={styles.idSigns}>
+        {[
+          { label: 'Sun Sign', val: `${SIGN_SYMBOLS[chart.planets[0].signIdx]} ${chart.sunSign}` },
+          { label: 'Moon Sign', val: `${SIGN_SYMBOLS[chart.planets[1].signIdx]} ${chart.moonSign}` },
+          { label: 'Ascendant', val: `${chart.lagnaSymbol} ${chart.lagnaName}` },
+          { label: 'Nakshatra', val: `${chart.moonNakshatra.symbol} ${chart.moonNakshatra.name}` },
+        ].map(s => (
+          <div key={s.label} className={styles.idSign}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--muted2)', marginBottom: 4 }}>{s.label}</div>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--gold)' }}>{s.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── ADD BUTTON HERE ── */}
+      <button
+        onClick={() => downloadChartPDF(chart, userName, form)}
+        style={{
+          padding: '10px 20px',
+          borderRadius: 100,
+          border: '1px solid rgba(212,168,83,.3)',
+          background: 'rgba(212,168,83,.08)',
+          color: 'var(--gold)',
+          fontFamily: 'var(--font-serif)',
+          fontSize: 13,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          transition: 'all .2s',
+          whiteSpace: 'nowrap',
+          alignSelf: 'center'
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,168,83,.16)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,168,83,.08)'}
+      >
+        ↓ Download PDF
+      </button>
+
+    </div>
+    
 
             <div className="tabs">
               {['chart', 'planets', 'dasha', 'nakshatra', 'chat'].map(t => (
