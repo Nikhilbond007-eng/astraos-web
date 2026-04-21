@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useStore } from '../utils/store'
-import { askAstroAI, getFallbackResponse } from '../utils/claude'
+import { sendChatMessage } from '../utils/api'
+import { getFallbackResponse } from '../utils/claude'
 import styles from './AstroChat.module.css'
 
 const SUGGESTIONS = [
@@ -49,15 +50,11 @@ export default function AstroChat({ chart, userName }) {
     setLoading(true)
 
     try {
-      const history = messages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }))
-      let response
-      const apiKey = import.meta.env.VITE_CLAUDE_API_KEY
-      if (apiKey && apiKey.length > 10) {
-        response = await askAstroAI(q, chart, userName, history)
-      } else {
-        await new Promise(r => setTimeout(r, 1200 + Math.random() * 800))
-        response = getFallbackResponse(q, chart, userName)
-      }
+      const history = messages.map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.text
+      }))
+      const response = await sendChatMessage(q, chart, userName, history, 'chart')
       setMessages(prev => [...prev, { role: 'assistant', text: response, time: new Date() }])
     } catch (err) {
       const fallback = getFallbackResponse(q, chart, userName)
@@ -66,6 +63,7 @@ export default function AstroChat({ chart, userName }) {
       setLoading(false)
     }
   }
+  
 
   const remaining = isPremium ? '∞' : Math.max(0, 3 - chatCount)
 

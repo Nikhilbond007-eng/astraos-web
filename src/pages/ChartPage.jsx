@@ -4,6 +4,7 @@ import { computeChart, SIGNS, SIGN_SYMBOLS, SIGN_COLORS, NAKSHATRAS, DASHAS, DAS
 import ChartWheel from '../components/ChartWheel'
 import AstroChat from '../components/AstroChat'
 import styles from './ChartPage.module.css'
+import { generateChart } from '../utils/api'
 
 const PLANET_DESCS = [
   'Your core identity, vitality, and soul purpose',
@@ -61,18 +62,34 @@ export default function ChartPage() {
 
   const generate = async () => {
     if (!form.dob) { setErr('Please enter your date of birth'); return }
-    if (!form.tob) { setErr('Please enter your time of birth for accurate results'); return }
+    if (!form.tob) { setErr('Please enter your time of birth'); return }
     setErr(''); setLoading(true)
     let i = 0
     setLoadText(LOAD_TEXTS[0])
-    const intv = setInterval(() => { i = (i + 1) % LOAD_TEXTS.length; setLoadText(LOAD_TEXTS[i]) }, 650)
-    await new Promise(r => setTimeout(r, 3500))
-    clearInterval(intv)
-    const result = computeChart(form.dob, form.tob, form.lat, form.lon, system)
-    setChart(result, form, form.name)
-    setLoading(false)
-    setActiveTab('chart')
+    const intv = setInterval(() => {
+      i = (i + 1) % LOAD_TEXTS.length
+      setLoadText(LOAD_TEXTS[i])
+    }, 650)
+    try {
+      const chart = await generateChart(
+        form.dob,
+        form.tob,
+        form.lat,
+        form.lon,
+        system,
+        form.name
+      )
+      setChart(chart, form, form.name)
+      setActiveTab('chart')
+    } catch (err) {
+      setErr('Chart generation failed. Please try again.')
+      console.error(err)
+    } finally {
+      clearInterval(intv)
+      setLoading(false)
+    }
   }
+  
 
   const mp = chart ? MOON_PHASES[chart.moonPhaseIndex] : null
 
