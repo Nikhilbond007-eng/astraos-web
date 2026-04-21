@@ -1,3 +1,4 @@
+import { saveChart } from '../utils/supabase'
 import { useState } from 'react'
 import { useStore } from '../utils/store'
 import { computeChart, SIGNS, SIGN_SYMBOLS, SIGN_COLORS, NAKSHATRAS, DASHAS, DASHA_DESC, MOON_PHASES } from '../utils/astrology'
@@ -80,6 +81,26 @@ export default function ChartPage() {
         form.name
       )
       setChart(chart, form, form.name)
+        // Save to Supabase if user is logged in
+try {
+  const { user } = useStore.getState()
+  if (user) {
+    const saved = await saveChart(chart, form, form.name)
+    useStore.getState().setChart(chart, form, form.name, saved?.id)
+  }
+} catch (e) {
+  console.log('Chart save skipped:', e.message)
+}// Save to Supabase if user is logged in
+try {
+  const { user } = useStore.getState()
+  if (user) {
+    const saved = await saveChart(chart, form, form.name)
+    useStore.getState().setChart(chart, form, form.name, saved?.id)
+  }
+} catch (e) {
+  console.log('Chart save skipped:', e.message)
+}
+      
       setActiveTab('chart')
     } catch (err) {
       setErr('Chart generation failed. Please try again.')

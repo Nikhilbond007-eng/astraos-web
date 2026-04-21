@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { useEffect, useRef } from 'react'
 import { Toaster } from 'react-hot-toast'
+import { useStore } from './utils/store'
 import Navbar from './components/Navbar'
 import StarCanvas from './components/StarCanvas'
 import HomePage from './pages/HomePage'
@@ -13,6 +14,11 @@ import PaywallModal from './components/PaywallModal'
 export default function App() {
   const dotRef = useRef(null)
   const ringRef = useRef(null)
+  const initAuth = useStore(s => s.initAuth)
+
+  useEffect(() => {
+    initAuth()
+  }, [])
 
   useEffect(() => {
     const dot = dotRef.current
@@ -42,7 +48,15 @@ export default function App() {
         <Route path="/pricing" element={<PricingPage />} />
       </Routes>
       <PaywallModal />
-      <Toaster position="bottom-center" toastOptions={{ style: { background: '#0f0e1c', color: '#ede8f8', border: '1px solid rgba(255,255,255,0.07)', fontFamily: 'EB Garamond, serif', fontSize: '16px' } }} />
+      <Toaster position="bottom-center" toastOptions={{
+        style: {
+          background: '#0f0e1c',
+          color: '#ede8f8',
+          border: '1px solid rgba(255,255,255,0.07)',
+          fontFamily: 'EB Garamond, serif',
+          fontSize: '16px'
+        }
+      }} />
     </>
   )
 }
