@@ -16,6 +16,7 @@ const CompatPage = lazy(() => import('./pages/CompatMoonTarot').then(m => ({ def
 const MoonPage = lazy(() => import('./pages/CompatMoonTarot').then(m => ({ default: m.MoonPage })))
 const NumerologyPage = lazy(() => import('./pages/NumerologyPricing').then(m => ({ default: m.NumerologyPage })))
 const PricingPage = lazy(() => import('./pages/NumerologyPricing').then(m => ({ default: m.PricingPage })))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 
 function PageLoader() {
   return (
@@ -90,6 +91,7 @@ export default function App() {
               <NumerologyPage />
             </LoginGate>
           } />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </Suspense>
       <PaywallModal />

@@ -31,15 +31,19 @@ export default function Navbar() {
     <>
       <nav className={styles.nav}>
         <div className={styles.inner}>
+
+          {/* Logo */}
           <Link to="/" className={styles.logo}>
             <span className={styles.logoIcon}>✦</span>
             <span className={styles.logoText}>AstraOS</span>
           </Link>
 
+          {/* Desktop nav links */}
           <div className={styles.links}>
             {NAV.map(n => (
               <Link
-                key={n.path} to={n.path}
+                key={n.path}
+                to={n.path}
                 className={`${styles.link} ${pathname === n.path ? styles.active : ''}`}
               >
                 {n.label}
@@ -47,18 +51,30 @@ export default function Navbar() {
             ))}
           </div>
 
+          {/* Right side actions */}
           <div className={styles.actions}>
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {isPremium && (
                   <span className={styles.premiumBadge}>✦ Premium</span>
                 )}
-                <span style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 10,
-                  color: 'var(--muted)', letterSpacing: 1
-                }}>
-                  {user.email?.split('@')[0]}
-                </span>
+                <Link
+                  to="/profile"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10,
+                    color: 'var(--gold)',
+                    letterSpacing: 1,
+                    textDecoration: 'none',
+                    padding: '6px 12px',
+                    borderRadius: 100,
+                    border: '1px solid rgba(212,168,83,.25)',
+                    background: 'rgba(212,168,83,.06)',
+                    transition: 'all .2s'
+                  }}
+                >
+                  {user.email?.split('@')[0]} ✦
+                </Link>
                 <button
                   onClick={handleSignOut}
                   className="btn-secondary"
@@ -85,6 +101,8 @@ export default function Navbar() {
                 </button>
               </div>
             )}
+
+            {/* Mobile burger */}
             <button
               className={styles.burger}
               onClick={() => setOpen(!open)}
@@ -95,17 +113,47 @@ export default function Navbar() {
           </div>
         </div>
 
+        {/* Mobile menu */}
         {open && (
           <div className={styles.mobile}>
             {NAV.map(n => (
               <Link
-                key={n.path} to={n.path}
+                key={n.path}
+                to={n.path}
                 className={styles.mobileLink}
                 onClick={() => setOpen(false)}
               >
                 {n.label}
               </Link>
             ))}
+            {user ? (
+              <div className={styles.mobileActions}>
+                <Link
+                  to="/profile"
+                  className={styles.mobileLink}
+                  onClick={() => setOpen(false)}
+                  style={{ color: 'var(--gold)' }}
+                >
+                  👤 My Profile
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  style={{ background: 'none', border: 'none', color: 'var(--muted)', fontFamily: 'var(--font-serif)', fontSize: 16, padding: '13px 16px', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className={styles.mobileActions}>
+                <button
+                  onClick={() => { setShowAuth(true); setOpen(false) }}
+                  className="btn-primary"
+                  style={{ width: '100%', textAlign: 'center', marginTop: 8 }}
+                >
+                  ✦ Sign In / Get Started
+                </button>
+              </div>
+            )}
           </div>
         )}
       </nav>
