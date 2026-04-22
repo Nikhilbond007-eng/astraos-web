@@ -23,3 +23,9 @@
   .tarotCard { width: 100px; }
   .compatRow { flex-direction: column; }
 }
+
+@media(max-width:768px) {
+  .tarotSpread { gap: 12px; }
+  .tarotCard { width: 100px; }
+  .compatRow { flex-direction: column; }
+}

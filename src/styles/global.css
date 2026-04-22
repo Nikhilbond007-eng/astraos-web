@@ -287,3 +287,15 @@ select.form-input option { background: #0d0b1f; }
   .tabs::-webkit-scrollbar { display: none; }
   .tab-btn { white-space: nowrap; flex-shrink: 0; }
 }
+
+@media (max-width: 768px) {
+  body { cursor: auto; }
+  .cursor-dot, .cursor-ring { display: none; }
+  .section-wrap { padding: 60px 16px; }
+  .section-wrap-sm { padding: 60px 16px; }
+  .card { padding: 18px 16px; }
+  .btn-primary { padding: 12px 24px; font-size: 14px; }
+  .tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 8px; justify-content: flex-start; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { white-space: nowrap; flex-shrink: 0; }
+}

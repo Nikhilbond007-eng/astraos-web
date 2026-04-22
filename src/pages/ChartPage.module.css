@@ -64,3 +64,14 @@
   .quickStats { grid-template-columns: 1fr; }
   .nkGrid { grid-template-columns: 1fr; }
 }
+
+@media(max-width:768px) {
+  .formGrid { grid-template-columns: 1fr; }
+  .systemToggle { flex-direction: column; }
+  .chartTab { grid-template-columns: 1fr; }
+  .quickStats { grid-template-columns: 1fr 1fr; }
+  .planetsGrid { grid-template-columns: 1fr; }
+  .identityStrip { flex-direction: column; gap: 16px; }
+  .idSigns { flex-wrap: wrap; gap: 16px; }
+  .nkGrid { grid-template-columns: 1fr 1fr; }
+}
