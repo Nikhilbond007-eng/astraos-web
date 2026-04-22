@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
-// ── Simple in-memory cache ──
+// ── In-memory cache ──
 const cache = new Map()
 function getCached(key) {
   const item = cache.get(key)
@@ -10,6 +10,35 @@ function getCached(key) {
 }
 function setCache(key, data, ttlMs) {
   cache.set(key, { data, expiry: Date.now() + ttlMs })
+}
+
+// ── Client-side question validator ──
+const GIBBERISH_PATTERN = /^[^aeiou\s]{5,}$/i
+
+export function validateQuestion(message) {
+  const trimmed = message.trim()
+
+  // Too short
+  if (trimmed.length < 4) {
+    return { valid: false, reason: 'too_short' }
+  }
+
+  // Pure gibberish — no vowels
+  if (GIBBERISH_PATTERN.test(trimmed.replace(/\s/g, ''))) {
+    return { valid: false, reason: 'gibberish' }
+  }
+
+  // Only numbers
+  if (/^\d+$/.test(trimmed)) {
+    return { valid: false, reason: 'numbers_only' }
+  }
+
+  // Only special characters
+  if (/^[^a-zA-Z0-9]+$/.test(trimmed)) {
+    return { valid: false, reason: 'special_chars' }
+  }
+
+  return { valid: true }
 }
 
 export async function generateChart(date, time, lat, lon, system, name) {
@@ -24,7 +53,6 @@ export async function generateChart(date, time, lat, lon, system, name) {
   })
   const data = await res.json()
   if (!data.success) throw new Error(data.error)
-  // Cache chart for 1 hour — planetary positions don't change
   setCache(cacheKey, data.chart, 60 * 60 * 1000)
   return data.chart
 }
@@ -41,7 +69,6 @@ export async function sendChatMessage(message, chart, userName, history, pageCon
 }
 
 export async function getDailyReading(chart, userName) {
-  // Cache daily reading for 6 hours per sun+moon+lagna combo
   const cacheKey = `daily-${chart.sunSign}-${chart.moonSign}-${chart.lagnaName}-${new Date().toDateString()}`
   const cached = getCached(cacheKey)
   if (cached) return cached

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../utils/store'
-import { sendChatMessage } from '../utils/api'
+import { sendChatMessage, validateQuestion } from '../utils/api'
 import { getFallbackResponse } from '../utils/claude'
 
 const SUGGESTED = [
@@ -24,6 +24,18 @@ export default function FloatingChat() {
   const send = async (overrideText) => {
     const q = (overrideText || input).trim()
     if (!q || loading) return
+
+    // ── Client-side validation ──
+    const validation = validateQuestion(q)
+    if (!validation.valid) {
+      setInput('')
+      setMessages(prev => [...prev,
+        { role: 'user', text: q },
+        { role: 'assistant', text: 'Please ask a meaningful question about your birth chart, life path, relationships, career, or spiritual journey. ✦' }
+      ])
+      return
+    }
+
     const allowed = incrementChat()
     if (!allowed) return
     setInput('')
@@ -106,7 +118,7 @@ export default function FloatingChat() {
             display: 'flex', flexDirection: 'column', gap: 12
           }}>
 
-            {/* Suggested questions — shown when no messages yet */}
+            {/* Suggested questions */}
             {messages.length === 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
                 <div style={{
