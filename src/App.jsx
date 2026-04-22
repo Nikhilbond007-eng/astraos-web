@@ -6,8 +6,8 @@ import Navbar from './components/Navbar'
 import StarCanvas from './components/StarCanvas'
 import PaywallModal from './components/PaywallModal'
 import FloatingChat from './components/FloatingChat'
+import LoginGate from './components/LoginGate'
 
-// ── Lazy load all pages ──
 const HomePage = lazy(() => import('./pages/HomePage'))
 const ChartPage = lazy(() => import('./pages/ChartPage'))
 const DailyPage = lazy(() => import('./pages/DailyPage').then(m => ({ default: m.DailyPage })))
@@ -17,7 +17,6 @@ const MoonPage = lazy(() => import('./pages/CompatMoonTarot').then(m => ({ defau
 const NumerologyPage = lazy(() => import('./pages/NumerologyPricing').then(m => ({ default: m.NumerologyPage })))
 const PricingPage = lazy(() => import('./pages/NumerologyPricing').then(m => ({ default: m.PricingPage })))
 
-// ── Page loading fallback ──
 function PageLoader() {
   return (
     <div style={{
@@ -27,10 +26,7 @@ function PageLoader() {
     }}>
       <div style={{ textAlign: 'center' }}>
         <div className="spinner" style={{ marginBottom: 16 }} />
-        <p style={{
-          fontFamily: 'var(--font-serif)', fontSize: 16,
-          color: 'var(--muted)', animation: 'pulse 1.5s infinite'
-        }}>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 16, color: 'var(--muted)', animation: 'pulse 1.5s infinite' }}>
           Loading...
         </p>
       </div>
@@ -67,13 +63,33 @@ export default function App() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/chart" element={<ChartPage />} />
-          <Route path="/daily" element={<DailyPage />} />
-          <Route path="/tarot" element={<TarotPage />} />
-          <Route path="/compatibility" element={<CompatPage />} />
-          <Route path="/moon" element={<MoonPage />} />
-          <Route path="/numerology" element={<NumerologyPage />} />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/chart" element={<ChartPage />} />
+          <Route path="/daily" element={
+            <LoginGate message="Sign in to receive your personalised daily cosmic reading.">
+              <DailyPage />
+            </LoginGate>
+          } />
+          <Route path="/tarot" element={
+            <LoginGate message="Sign in to draw your personalised tarot cards.">
+              <TarotPage />
+            </LoginGate>
+          } />
+          <Route path="/compatibility" element={
+            <LoginGate message="Sign in to check your cosmic compatibility.">
+              <CompatPage />
+            </LoginGate>
+          } />
+          <Route path="/moon" element={
+            <LoginGate message="Sign in to access the lunar calendar and moon rituals.">
+              <MoonPage />
+            </LoginGate>
+          } />
+          <Route path="/numerology" element={
+            <LoginGate message="Sign in to calculate your sacred numbers.">
+              <NumerologyPage />
+            </LoginGate>
+          } />
         </Routes>
       </Suspense>
       <PaywallModal />

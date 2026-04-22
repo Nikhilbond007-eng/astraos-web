@@ -3,6 +3,7 @@ import { useStore } from '../utils/store'
 import { SIGN_SYMBOLS, MOON_PHASES, DASHA_DESC } from '../utils/astrology'
 import ChartWheel from '../components/ChartWheel'
 import AstroChat from '../components/AstroChat'
+import AuthModal from '../components/AuthModal'
 import styles from './ChartPage.module.css'
 import { generateChart } from '../utils/api'
 import { saveChart, loadUserChart } from '../utils/supabase'
@@ -59,8 +60,8 @@ export default function ChartPage() {
   const [loadText, setLoadText] = useState('')
   const [activeTab, setActiveTab] = useState('chart')
   const [err, setErr] = useState('')
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
-  // ── Auto-load saved chart when user logs in ──
   useEffect(() => {
     if (!user || chart) return
     const load = async () => {
@@ -184,14 +185,29 @@ export default function ChartPage() {
             </div>
             <div className="form-group" style={{ justifyContent: 'flex-end' }}>
               {err && <p style={{ color: 'var(--rose)', fontSize: 13, marginBottom: 8 }}>{err}</p>}
-              <button
-                className="btn-primary"
-                style={{ width: '100%', textAlign: 'center' }}
-                onClick={generate}
-                disabled={loading}
-              >
-                {loading ? loadText : '✦  Generate My Chart'}
-              </button>
+              {user ? (
+                <button
+                  className="btn-primary"
+                  style={{ width: '100%', textAlign: 'center' }}
+                  onClick={generate}
+                  disabled={loading}
+                >
+                  {loading ? loadText : '✦  Generate My Chart'}
+                </button>
+              ) : (
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ color: 'var(--muted)', fontSize: 14, fontStyle: 'italic', marginBottom: 12 }}>
+                    Sign in to generate your cosmic blueprint and save your chart forever.
+                  </p>
+                  <button
+                    className="btn-primary"
+                    style={{ width: '100%', textAlign: 'center' }}
+                    onClick={() => setShowAuthModal(true)}
+                  >
+                    ✦ Sign In to Generate Chart
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -208,7 +224,6 @@ export default function ChartPage() {
         {chart && !loading && (
           <div className={styles.results}>
 
-            {/* ── Identity Strip ── */}
             <div className={styles.identityStrip}>
               <div className={styles.idMain}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px,3vw,28px)', color: 'var(--gold2)', marginBottom: 6 }}>
@@ -218,7 +233,6 @@ export default function ChartPage() {
                   {system === 'vedic' ? 'Vedic · Lahiri Ayanamsha' : 'Western · Tropical Zodiac'} · {form.dob ? new Date(form.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : ''} · {form.tob} · {form.city}
                 </div>
               </div>
-
               <div className={styles.idSigns}>
                 {[
                   { label: 'Sun Sign', val: `${SIGN_SYMBOLS[chart.planets[0].signIdx]} ${chart.sunSign}` },
@@ -232,25 +246,17 @@ export default function ChartPage() {
                   </div>
                 ))}
               </div>
-
-              {/* ── Download PDF Button ── */}
               <button
                 onClick={() => downloadChartPDF(chart, userName, form)}
                 style={{
-                  padding: '10px 20px',
-                  borderRadius: 100,
+                  padding: '10px 20px', borderRadius: 100,
                   border: '1px solid rgba(212,168,83,.3)',
                   background: 'rgba(212,168,83,.08)',
-                  color: 'var(--gold)',
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  transition: 'all .2s',
-                  whiteSpace: 'nowrap',
-                  alignSelf: 'center'
+                  color: 'var(--gold)', fontFamily: 'var(--font-serif)',
+                  fontSize: 13, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center',
+                  gap: 8, transition: 'all .2s',
+                  whiteSpace: 'nowrap', alignSelf: 'center'
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,168,83,.16)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,168,83,.08)'}
@@ -259,7 +265,6 @@ export default function ChartPage() {
               </button>
             </div>
 
-            {/* ── Tabs ── */}
             <div className="tabs">
               {['chart', 'planets', 'dasha', 'nakshatra', 'chat'].map(t => (
                 <button
@@ -272,7 +277,6 @@ export default function ChartPage() {
               ))}
             </div>
 
-            {/* ── Chart Tab ── */}
             {activeTab === 'chart' && (
               <div className={styles.chartTab}>
                 <div className={styles.chartLeft}>
@@ -332,7 +336,6 @@ export default function ChartPage() {
               </div>
             )}
 
-            {/* ── Planets Tab ── */}
             {activeTab === 'planets' && (
               <div className={styles.planetsGrid}>
                 {chart.planets.map((p, i) => (
@@ -357,7 +360,6 @@ export default function ChartPage() {
               </div>
             )}
 
-            {/* ── Dasha Tab ── */}
             {activeTab === 'dasha' && (
               <div>
                 <div className={styles.dashaMain}>
@@ -397,7 +399,6 @@ export default function ChartPage() {
               </div>
             )}
 
-            {/* ── Nakshatra Tab ── */}
             {activeTab === 'nakshatra' && (
               <div>
                 <div className={styles.nkCard}>
@@ -430,7 +431,6 @@ export default function ChartPage() {
               </div>
             )}
 
-            {/* ── Chat Tab ── */}
             {activeTab === 'chat' && (
               <div>
                 <div style={{ marginBottom: 20 }}>
@@ -448,6 +448,8 @@ export default function ChartPage() {
           </div>
         )}
       </div>
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </main>
   )
 }
