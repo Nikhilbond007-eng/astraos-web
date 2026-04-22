@@ -5,14 +5,14 @@ import { getFallbackResponse } from '../utils/claude'
 import styles from './AstroChat.module.css'
 
 const SUGGESTIONS = [
-  'What does my current Dasha mean?',
-  'Is love coming for me this year?',
-  'Best career path for my chart?',
-  'What precautions should I take?',
-  'How is my health this year?',
-  'When is my luckiest time period?',
-  'Tell me about my Nakshatra',
-  'What are my lucky numbers today?',
+  'What does my current Dasha mean for my life?',
+  'What is my biggest strength in this chart?',
+  'What should I focus on this year?',
+  'Tell me about my Moon Nakshatra in detail',
+  'What does my chart say about my career?',
+  'Is this a good time for love and relationships?',
+  'What are my lucky periods coming up?',
+  'What precautions should I take right now?',
 ]
 
 export default function AstroChat({ chart, userName }) {
