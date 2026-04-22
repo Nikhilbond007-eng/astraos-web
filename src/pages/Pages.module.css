@@ -17,3 +17,9 @@
   .tarotSpread { gap: 14px; }
   .tarotCard { width: 110px; }
 }
+
+@media(max-width:768px) {
+  .tarotSpread { gap: 12px; }
+  .tarotCard { width: 100px; }
+  .compatRow { flex-direction: column; }
+}

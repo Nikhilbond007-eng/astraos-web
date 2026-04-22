@@ -47,3 +47,20 @@
 .nkCard { background: linear-gradient(135deg,rgba(45,212,192,.05),rgba(124,92,252,.05)); border: 1px solid rgba(45,212,192,.15); border-radius: 20px; padding: 32px; }
 .nkGrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
 @media(max-width:680px) { .nkGrid { grid-template-columns: 1fr 1fr; } }
+
+@media(max-width:768px) {
+  .formGrid { grid-template-columns: 1fr; }
+  .systemToggle { flex-direction: column; }
+  .chartTab { grid-template-columns: 1fr; }
+  .chartLegend { grid-template-columns: 1fr 1fr; }
+  .quickStats { grid-template-columns: 1fr 1fr; }
+  .planetsGrid { grid-template-columns: 1fr; }
+  .identityStrip { flex-direction: column; gap: 16px; align-items: flex-start; }
+  .idSigns { flex-wrap: wrap; gap: 16px; }
+  .nkGrid { grid-template-columns: 1fr 1fr; }
+  .dashaItem { flex-wrap: wrap; gap: 6px; }
+}
+@media(max-width:480px) {
+  .quickStats { grid-template-columns: 1fr; }
+  .nkGrid { grid-template-columns: 1fr; }
+}
